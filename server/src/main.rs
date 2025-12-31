@@ -21,15 +21,18 @@ pub struct MyGreeter;
 
 #[tonic::async_trait]
 impl Greeter for MyGreeter {
-    // #[instrument(skip_all, fields(client = ?request.remote_addr(),body = ?request.get_ref()), level=Level::TRACE)]
     async fn say_hello(&self, request: Request<HelloRequest>) -> TonicResponse {
         let current_span = Span::current();
         if let Some(client) = request.remote_addr() {
             record_all!(current_span, client = ?client);
         }
-        trace!(body = ?request.get_ref());
+        trace!(message = ?request.get_ref());
+        let name = request.into_inner().name;
+        if name == "Error" {
+            return Err(Status::internal("Simulated server internal error"));
+        }
         let reply = HelloReply {
-            message: format!("Hello {}!", request.into_inner().name),
+            message: format!("Hello {name}!"),
         };
         Ok(Response::new(reply))
     }

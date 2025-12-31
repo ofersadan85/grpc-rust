@@ -3,7 +3,8 @@ pub enum Error {
     Io(#[from] std::io::Error),
     Eyre(#[from] color_eyre::Report),
     Addr(#[from] std::net::AddrParseError),
-    Tonic(#[from] tonic::transport::Error),
+    TonicError(#[from] tonic::transport::Error),
+    TonicStatus(#[from] tonic::Status),
 }
 
 impl std::fmt::Display for Error {
@@ -12,7 +13,8 @@ impl std::fmt::Display for Error {
             Self::Io(e) => e.fmt(f),
             Self::Eyre(e) => e.fmt(f),
             Self::Addr(e) => e.fmt(f),
-            Self::Tonic(e) => e.fmt(f),
+            Self::TonicError(e) => e.fmt(f),
+            Self::TonicStatus(e) => e.fmt(f),
         }
     }
 }
