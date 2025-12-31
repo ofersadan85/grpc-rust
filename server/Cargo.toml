@@ -1,0 +1,26 @@
+[package]
+name = "server"
+version = "0.1.0"
+edition = "2024"
+authors = ["Ofer Sadan <ofersadan85@gmail.com>"]
+readme = "./README.md"
+description = "Common utilities for gRPC client and server"
+repository = "https://github.com/ofersadan85/grpc-rust/"
+license = "GPL-3.0-only"
+# license-file = "./LICENSE"
+keywords = []
+categories = []
+publish = false
+
+[lints]
+workspace = true
+
+[dependencies]
+common = { workspace = true }
+clap = { workspace = true }
+http = { workspace = true }
+tokio = { workspace = true }
+tower = { workspace = true }
+tonic = { workspace = true }
+tracing = { workspace = true }
+uuid = { workspace = true }
