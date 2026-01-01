@@ -1,42 +1,25 @@
 use clap::Parser;
 use common::{
     Cli,
-    pb::hello_world::{
-        greeter_server::{Greeter, GreeterServer},
-        {HelloReply, HelloRequest},
+    pb::{
+        hello_world::greeter_server::GreeterServer,
+        route_guide::route_guide_server::RouteGuideServer,
     },
     prelude::{Result, prelude},
 };
-use std::net::SocketAddr;
-use tonic::{Request, Response, Status, transport::Server};
-use tracing::{Span, error, info, record_all, trace, trace_span};
+use std::{net::SocketAddr, sync::Arc};
+use tonic::{Response, transport::Server};
+use tracing::{error, info, trace_span};
 
 mod middleware;
 use middleware::LoggingLayer;
+mod hello_world;
+use hello_world::MyGreeter;
+mod route_guide;
+use route_guide::RouteGuideService;
+mod data;
 
-pub type TonicResponse = std::result::Result<Response<HelloReply>, Status>;
-
-#[derive(Debug)]
-pub struct MyGreeter;
-
-#[tonic::async_trait]
-impl Greeter for MyGreeter {
-    async fn say_hello(&self, request: Request<HelloRequest>) -> TonicResponse {
-        let current_span = Span::current();
-        if let Some(client) = request.remote_addr() {
-            record_all!(current_span, client = ?client);
-        }
-        trace!(message = ?request.get_ref());
-        let name = request.into_inner().name;
-        if name == "Error" {
-            return Err(Status::internal("Simulated server internal error"));
-        }
-        let reply = HelloReply {
-            message: format!("Hello {name}!"),
-        };
-        Ok(Response::new(reply))
-    }
-}
+pub type TonicResponse<T> = tonic::Result<Response<T>>;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -48,9 +31,14 @@ async fn main() -> Result<()> {
     let middleware = tower::ServiceBuilder::new()
         .layer(LoggingLayer)
         .into_inner();
+    let route_guide = RouteGuideService {
+        features: Arc::new(data::load()?),
+    };
     let server = Server::builder()
         .layer(middleware)
-        .add_service(GreeterServer::new(MyGreeter));
+        .add_service(GreeterServer::new(MyGreeter))
+        .add_service(RouteGuideServer::new(route_guide));
+
     info!("Server listening on {address}");
     tokio::select! {
         ctrl_c = tokio::signal::ctrl_c() => match ctrl_c {

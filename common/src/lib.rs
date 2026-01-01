@@ -3,9 +3,12 @@ use std::net::Ipv6Addr;
 pub mod prelude;
 
 pub mod pb {
+    #![allow(clippy::all, clippy::pedantic, clippy::nursery)]
     pub mod hello_world {
-        #![allow(clippy::all, clippy::pedantic, clippy::nursery)]
-        tonic::include_proto!("helloworld");
+        tonic::include_proto!("hello_world");
+    }
+    pub mod route_guide {
+        tonic::include_proto!("route_guide");
     }
 }
 

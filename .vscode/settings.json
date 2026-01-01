@@ -1,7 +1,9 @@
 {
     "cSpell.words": [
         "chrono",
+        "fastrand",
         "prost",
+        "rngs",
         "thiserror"
     ]
 }

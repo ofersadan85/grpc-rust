@@ -16,10 +16,14 @@ publish = false
 workspace = true
 
 [dependencies]
+async-stream = { workspace = true }
 common = { workspace = true }
 clap = { workspace = true }
 http = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
 tokio = { workspace = true }
+tokio-stream = { workspace = true }
 tower = { workspace = true }
 tonic = { workspace = true }
 tracing = { workspace = true }

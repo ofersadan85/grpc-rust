@@ -4,7 +4,7 @@ use std::{
     task::{Context, Poll},
 };
 use tower::{Layer, Service};
-use tracing::{field, info_span, record_all};
+use tracing::{Span, field, info_span, record_all, trace};
 use uuid::Uuid;
 
 pub type BoxFuture<'a, T> = Pin<Box<dyn std::future::Future<Output = T> + Send + 'a>>;
@@ -60,4 +60,12 @@ impl<S> Layer<S> for LoggingLayer {
     fn layer(&self, inner: S) -> Self::Service {
         LoggingMiddleware { inner }
     }
+}
+
+pub fn add_request_log<T: std::fmt::Debug>(request: &tonic::Request<T>) {
+    let current_span = Span::current();
+    if let Some(client) = request.remote_addr() {
+        record_all!(current_span, client = ?client);
+    }
+    trace!(message = ?request.get_ref());
 }
