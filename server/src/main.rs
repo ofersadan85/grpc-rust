@@ -1,13 +1,15 @@
 use clap::Parser;
 use common::{
-    Cli,
     pb::{
         hello_world::greeter_server::GreeterServer,
         route_guide::route_guide_server::RouteGuideServer,
     },
     prelude::{Result, prelude},
 };
-use std::{net::SocketAddr, sync::Arc};
+use std::{
+    net::{Ipv6Addr, SocketAddr},
+    sync::Arc,
+};
 use tokio::signal::ctrl_c;
 use tonic::{Response, transport::Server};
 use tonic_health::server::health_reporter;
@@ -23,6 +25,18 @@ use route_guide::RouteGuideService;
 mod data;
 
 pub type TonicResponse<T> = tonic::Result<Response<T>>;
+
+#[derive(clap::Parser)]
+#[command(version, about, long_about = None)]
+pub struct Cli {
+    /// Host IP address
+    #[arg(long, env, default_value_t = Ipv6Addr::LOCALHOST.into())]
+    pub host: std::net::IpAddr,
+
+    /// Port number
+    #[arg(long, env, default_value_t = 50051)]
+    pub port: u16,
+}
 
 #[tokio::main]
 async fn main() -> Result<()> {

@@ -16,7 +16,7 @@ unwrap_used = "deny"
 common = { path = "common" }
 
 async-stream = "0.3.6"
-clap = { version = "4.5.53", features = ["derive"] }
+clap = { version = "4.5.53", features = ["derive", "env"] }
 color-eyre = "0.6.5"
 fastrand = "2.3.0"
 futures = "0.3.31"

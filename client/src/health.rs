@@ -12,7 +12,7 @@ use tracing::{error, info, warn};
 pub static SERVICE_STATUS: LazyLock<Mutex<HashMap<String, ServingStatus>>> =
     LazyLock::new(|| Mutex::new(HashMap::new()));
 
-async fn health_watch_service(mut client: HealthClient<Channel>, service: String) -> Result<()> {
+async fn watch_service_health(mut client: HealthClient<Channel>, service: String) -> Result<()> {
     let request = Request::new(HealthCheckRequest {
         service: service.clone(),
     });
@@ -32,11 +32,34 @@ async fn health_watch_service(mut client: HealthClient<Channel>, service: String
     Ok(())
 }
 
-pub async fn all_health_checks(client: HealthClient<Channel>, services: &[&str]) {
+pub async fn watch_all_services(client: HealthClient<Channel>, services: &[String]) {
     join_all(
         services
             .iter()
-            .map(|&service| health_watch_service(client.clone(), service.to_string())),
+            .map(|service| watch_service_health(client.clone(), service.clone())),
     )
     .await;
+}
+
+pub async fn run_health_checks_once(channel: Channel, services: &[String]) -> Result<()> {
+    let mut client = HealthClient::new(channel.clone());
+    for service in services {
+        let request = Request::new(HealthCheckRequest {
+            service: service.clone(),
+        });
+        let response = client.check(request).await?;
+        let status = response.get_ref().status();
+        let service_type = if service.is_empty() {
+            "SERVER"
+        } else {
+            "SERVICE"
+        };
+        match status {
+            ServingStatus::Serving => info!("{service_type} HEALTHY {service}"),
+            ServingStatus::NotServing => error!("{service_type} UNHEALTHY {service}"),
+            ServingStatus::Unknown => warn!("{service_type} STATUS UNKNOWN {service}"),
+            ServingStatus::ServiceUnknown => error!("{service_type} NOT FOUND {service}"),
+        }
+    }
+    Ok(())
 }
