@@ -10,6 +10,7 @@ common = { workspace = true }
 fastrand = { workspace = true }
 tokio ={ workspace = true }
 tonic = { workspace = true }
+tonic-health = { workspace = true }
 tracing = { workspace = true }
 
 [lints]

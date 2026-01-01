@@ -9,6 +9,8 @@ use common::{
 };
 use std::{net::SocketAddr, sync::Arc};
 use tonic::{Response, transport::Server};
+use tonic_health::server::health_reporter;
+use tower::ServiceBuilder;
 use tracing::{error, info, trace_span};
 
 mod middleware;
@@ -28,17 +30,24 @@ async fn main() -> Result<()> {
     let _enter = main_span.enter();
     let args = Cli::parse();
     let address = SocketAddr::new(args.host, args.port);
-    let middleware = tower::ServiceBuilder::new()
-        .layer(LoggingLayer)
-        .into_inner();
+    let middleware = ServiceBuilder::new().layer(LoggingLayer).into_inner();
+    let (health_reporter, health_service) = health_reporter();
     let route_guide = RouteGuideService {
         features: Arc::new(data::load()?),
     };
+
+    health_reporter
+        .set_serving::<GreeterServer<MyGreeter>>()
+        .await;
+    health_reporter
+        .set_serving::<RouteGuideServer<RouteGuideService>>()
+        .await;
+
     let server = Server::builder()
         .layer(middleware)
         .add_service(GreeterServer::new(MyGreeter))
-        .add_service(RouteGuideServer::new(route_guide));
-
+        .add_service(RouteGuideServer::new(route_guide))
+        .add_service(health_service);
     info!("Server listening on {address}");
     tokio::select! {
         ctrl_c = tokio::signal::ctrl_c() => match ctrl_c {
