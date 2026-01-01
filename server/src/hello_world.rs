@@ -4,10 +4,10 @@ use tonic::{Request, Response, Status};
 use crate::{TonicResponse, middleware::add_request_log};
 
 #[derive(Debug)]
-pub struct MyGreeter;
+pub struct GreeterService;
 
 #[tonic::async_trait]
-impl Greeter for MyGreeter {
+impl Greeter for GreeterService {
     async fn say_hello(&self, request: Request<HelloRequest>) -> TonicResponse<HelloReply> {
         add_request_log(&request);
         let name = request.into_inner().name;

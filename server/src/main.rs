@@ -8,6 +8,7 @@ use common::{
     prelude::{Result, prelude},
 };
 use std::{net::SocketAddr, sync::Arc};
+use tokio::signal::ctrl_c;
 use tonic::{Response, transport::Server};
 use tonic_health::server::health_reporter;
 use tower::ServiceBuilder;
@@ -16,7 +17,7 @@ use tracing::{error, info, trace_span};
 mod middleware;
 use middleware::LoggingLayer;
 mod hello_world;
-use hello_world::MyGreeter;
+use hello_world::GreeterService;
 mod route_guide;
 use route_guide::RouteGuideService;
 mod data;
@@ -37,7 +38,7 @@ async fn main() -> Result<()> {
     };
 
     health_reporter
-        .set_serving::<GreeterServer<MyGreeter>>()
+        .set_serving::<GreeterServer<GreeterService>>()
         .await;
     health_reporter
         .set_serving::<RouteGuideServer<RouteGuideService>>()
@@ -45,12 +46,12 @@ async fn main() -> Result<()> {
 
     let server = Server::builder()
         .layer(middleware)
-        .add_service(GreeterServer::new(MyGreeter))
+        .add_service(GreeterServer::new(GreeterService))
         .add_service(RouteGuideServer::new(route_guide))
         .add_service(health_service);
     info!("Server listening on {address}");
     tokio::select! {
-        ctrl_c = tokio::signal::ctrl_c() => match ctrl_c {
+        ctrl_c = ctrl_c() => match ctrl_c {
             Ok(()) => info!("Shutdown signal received. Goodbye!"),
             Err(ref e) => {
                 error!("Could not register Ctrl-C signal handler: {e}");

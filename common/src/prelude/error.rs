@@ -8,6 +8,7 @@ pub enum Error {
     TonicStatus(#[from] tonic::Status),
     Json(#[from] serde_json::Error),
     InvalidUri(#[from] http::uri::InvalidUri),
+    JoinError(#[from] tokio::task::JoinError),
 }
 
 impl std::fmt::Display for Error {
@@ -21,6 +22,7 @@ impl std::fmt::Display for Error {
             Self::TonicStatus(e) => e.fmt(f),
             Self::Json(e) => e.fmt(f),
             Self::InvalidUri(e) => e.fmt(f),
+            Self::JoinError(e) => e.fmt(f),
         }
     }
 }
