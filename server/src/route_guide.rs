@@ -31,7 +31,7 @@ impl RouteGuide for RouteGuideService {
     async fn list_features(
         &self,
         request: Request<Rectangle>,
-    ) -> Result<Response<Self::ListFeaturesStream>, Status> {
+    ) -> TonicResponse<Self::ListFeaturesStream> {
         add_request_log(&request);
         let (tx, rx) = mpsc::channel(4);
         let features = self.features.clone();
@@ -87,7 +87,7 @@ impl RouteGuide for RouteGuideService {
     async fn route_chat(
         &self,
         request: Request<Streaming<RouteNote>>,
-    ) -> Result<Response<Self::RouteChatStream>, Status> {
+    ) -> TonicResponse<Self::RouteChatStream> {
         add_request_log(&request);
         let mut notes = HashMap::new();
         let mut stream = request.into_inner();
