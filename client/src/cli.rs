@@ -23,6 +23,11 @@ pub enum Commands {
     Health(HealthOptions),
     /// Run example tasks
     Examples,
+    /// Send a chat message
+    Chat {
+        /// Message content
+        message: String,
+    },
 }
 
 impl Default for Commands {

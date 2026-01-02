@@ -1,8 +1,7 @@
 use clap::Parser;
 use common::{
     pb::{
-        hello_world::greeter_server::GreeterServer,
-        route_guide::route_guide_server::RouteGuideServer,
+        chat::chat_server::ChatServer, hello_world::greeter_server::GreeterServer, route_guide::route_guide_server::RouteGuideServer
     },
     prelude::{Result, prelude},
 };
@@ -22,6 +21,8 @@ mod hello_world;
 use hello_world::GreeterService;
 mod route_guide;
 use route_guide::RouteGuideService;
+mod chat;
+use chat::ChatService;
 mod data;
 
 pub type TonicResponse<T> = tonic::Result<Response<T>>;
@@ -62,6 +63,7 @@ async fn main() -> Result<()> {
         .layer(middleware)
         .add_service(GreeterServer::new(GreeterService))
         .add_service(RouteGuideServer::new(route_guide))
+        .add_service(ChatServer::new(ChatService::new(256)))
         .add_service(health_service);
     info!("Server listening on {address}");
     tokio::select! {

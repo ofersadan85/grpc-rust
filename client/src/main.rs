@@ -18,6 +18,8 @@ mod hello_world;
 use hello_world::run_hello_world;
 mod route_guide;
 use route_guide::{get_features, print_features, run_record_route, run_route_chat};
+mod chat;
+use chat::send_message;
 mod health;
 use health::{run_health_checks_once, watch_all_services};
 
@@ -66,6 +68,9 @@ async fn main() -> Result<()> {
             run_health_checks_once(channel, options.services.as_slice()).await?;
         }
         Commands::Examples => example_tasks(channel).await?,
+        Commands::Chat { message } => {
+            send_message(channel, message).await?;
+        }
     }
 
     Ok(())

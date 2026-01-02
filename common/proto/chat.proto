@@ -1,0 +1,175 @@
+syntax = "proto3";
+package chat;
+
+/* =========================
+ Core Entities
+ ========================= */
+
+message Empty {
+  
+}
+
+message Uuid {
+  string value = 1;
+}
+
+message User {
+  string id           = 1;
+  string username     = 2;
+  string display_name = 3;
+}
+
+message Room {
+  string                    id         = 1;
+  string                    name       = 2;
+  bool                      is_private = 3;
+  string                    owner_id   = 4;
+}
+
+message Attachment {
+  string id         = 1;
+  string filename   = 2;
+  string mime_type  = 3;
+  bytes  data       = 4; // arbitrary binary file data
+  uint64 size_bytes = 5;
+}
+
+message Message {
+  string id        = 1;
+  string room_id   = 2;
+  string sender_id = 3;
+
+  string content = 4;
+
+  // Optional reference to another message
+  string reply_to_message_id = 5;
+
+  repeated Attachment attachments = 6;
+
+  bool edited  = 7;
+  bool deleted = 8;
+}
+
+/* =========================
+ Room & Membership
+ ========================= */
+
+message CreateRoomRequest {
+  string          name               = 1;
+  bool            is_private         = 2;
+  repeated string initial_member_ids = 3;
+}
+
+message CreateRoomResponse {
+  Room room = 1;
+}
+
+message InviteUserRequest {
+  string room_id         = 1;
+  string invited_user_id = 2;
+}
+
+message RemoveUserRequest {
+  string room_id = 1;
+  string user_id = 2;
+}
+
+/* =========================
+ Messaging
+ ========================= */
+
+message SendMessageRequest {
+  string              room_id             = 1;
+  string              content             = 2;
+  string              reply_to_message_id = 3;
+  repeated Attachment attachments         = 4;
+}
+
+message SendMessageResponse {
+  string message_id = 1;
+}
+
+message EditMessageRequest {
+  string message_id  = 1;
+  string new_content = 2;
+}
+
+message DeleteMessageRequest {
+  string message_id = 1;
+}
+
+message ListMessagesRequest {
+  string room_id           = 1;
+  uint32 limit             = 2;
+}
+
+message ListMessagesResponse {
+  repeated Message messages = 1;
+}
+
+/* =========================
+ Reactions & Read Receipts
+ ========================= */
+
+message AddReactionRequest {
+  string message_id = 1;
+  string emoji      = 2;
+}
+
+message RemoveReactionRequest {
+  string message_id = 1;
+  string emoji      = 2;
+}
+
+message ReadReceipt {
+  string                    message_id = 1;
+  string                    user_id    = 2;
+}
+
+/* =========================
+ Presence & Typing
+ ========================= */
+
+message TypingEvent {
+  string room_id   = 1;
+  string user_id   = 2;
+  bool   is_typing = 3;
+}
+
+/* =========================
+ Streaming Events
+ ========================= */
+
+message ChatEvent {
+  oneof event {
+    Message     new_message        = 1;
+    Message     updated_message    = 2;
+    string      deleted_message_id = 3;
+    TypingEvent typing             = 4;
+    ReadReceipt read_receipt       = 5;
+  }
+}
+
+/* =========================
+ Services
+ ========================= */
+
+service Chat {
+  // Rooms
+  rpc CreateRoom(CreateRoomRequest) returns (CreateRoomResponse);
+  rpc InviteUser(InviteUserRequest) returns (Empty);
+  rpc RemoveUser(RemoveUserRequest) returns (Empty);
+
+  // Messaging
+  rpc SendMessage(SendMessageRequest) returns (SendMessageResponse);
+  rpc EditMessage(EditMessageRequest) returns (Empty);
+  rpc DeleteMessage(DeleteMessageRequest) returns (Empty);
+  rpc ListMessages(ListMessagesRequest) returns (ListMessagesResponse);
+
+  // Reactions
+  rpc AddReaction(AddReactionRequest) returns (Empty);
+  rpc RemoveReaction(RemoveReactionRequest) returns (Empty);
+
+  // Realtime stream
+  rpc StreamEvents(stream Message) returns (stream ChatEvent);
+}
